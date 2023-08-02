@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Data</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+
+        var CLIENT_ID = '193622473033-evps2u6f8qphrh1ue2fh5sut8s87eb70.apps.googleusercontent.com';
+        var API_KEY = 'AIzaSyCytoV3x2QelErPtLRr8m_rG9MFJ7QGjuU';
+
+        var SPREADSHEET_ID = '1eNqlDSB3XXgqvvJ4Zx9WBSViPtFzDpxDKFATJqogygY';
+
+        var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+
+        var SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES
+            }).then(function () {
+                
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            });
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                getDataFromSheet();
+            } else {
+                gapi.auth2.getAuthInstance().signIn();
+            }
+        }
+
+        function getDataFromSheet() {
+            gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: 'Sheet1'
+            }).then(function(response) {
+                var values = response.result.values;
+                var dataContainer = document.getElementById('data-container');
+
+                dataContainer.innerHTML = '';
+
+                if (values.length > 0) {
+                    for (var i = 0; i < values.length; i++) {
+                        var row = values[i];
+                        var rowHTML = '<div>' + row.join(', ') + '</div>';
+                        dataContainer.innerHTML += rowHTML;
+                    }
+                } else {
+                    dataContainer.innerHTML = 'No data available.';
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Google Sheets Data</h1>
+    <div id="data-container"></div>
+    <script async defer src="https://apis.google.com/js/api.js"
+            onload="this.onload=function(){};handleClientLoad()"
+            onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+</body>
+</html>
